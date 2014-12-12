@@ -115,6 +115,15 @@ myApp.all('/m/*', mobileApp);
 This allows you to easily split up your application into seperate parts
 and mount them all on one server
 
+## Payload Limit
+
+If you want to limit the amount of bytes your app can receive when using the `body`, 
+`form` or `json` events, you can do it in the following way.
+
+```js
+var app = root({payloadLimit: 10000}); // 10000 bytes limit
+```
+
 ## Full API
 
 ### Response
