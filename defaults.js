@@ -3,46 +3,47 @@ var util = require('util');
 var url = require('url');
 var qs = require('querystring');
 
-var parsers = {};
-
-parsers.body = function(request, response) {
-	var decoder = new StringDecoder();
-	var buf = '';
-
-	request.on('data', function(data) {
-		buf += decoder.write(data);
-	});
-	request.on('end', function() {
-		request.emit('body', buf);
-	});
-};
-parsers.json = function(request, response) {
-	request.on('body', function(body) {
-		try {
-			body = JSON.parse(body);
-		} catch (err) {
-			return response.error(400, 'could not parse json');
-		}
-		request.emit('json', body === null ? {} : body);
-	});
-};
-parsers.form = function(request, response) {
-	request.on('body', function(body) {
-		request.emit('form', qs.parse(body));
-	});
-};
-
-var onparser = function(name) {
-	if (!parsers[name]) return;
-	if (this.parsing[name]) return;
-	this.parsing[name] = true;
-	parsers[name](this, this.response);
-};
-var parseURL = function(request) {
-	return request._url || (request._url = url.parse(request.url, true));
-};
-
 module.exports = function(app) {
+	var parsers = {};
+
+	parsers.body = function(request, response) {
+		var decoder = new StringDecoder();
+		var buf = '';
+		var length = 0;
+
+		request.on('data', function(data) {
+			if (app._payloadLimit && (length += data.length) > app._payloadLimit) return request.destroy();
+			buf += decoder.write(data);
+		});
+		request.on('end', function() {
+			request.emit('body', buf);
+		});
+	};
+	parsers.json = function(request, response) {
+		request.on('body', function(body) {
+			try {
+				body = JSON.parse(body);
+			} catch (err) {
+				return response.error(400, 'could not parse json');
+			}
+			request.emit('json', body === null ? {} : body);
+		});
+	};
+	parsers.form = function(request, response) {
+		request.on('body', function(body) {
+			request.emit('form', qs.parse(body));
+		});
+	};
+
+	var onparser = function(name) {
+		if (!parsers[name]) return;
+		if (this.parsing[name]) return;
+		this.parsing[name] = true;
+		parsers[name](this, this.response);
+	};
+	var parseURL = function(request) {
+		return request._url || (request._url = url.parse(request.url, true));
+	};
 	app.use('request.query', {getter:true}, function() {
 		return parseURL(this).query;
 	});

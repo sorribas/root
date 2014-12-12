@@ -10,11 +10,12 @@ METHODS.forEach(function(method) {
 	ALIASES[method.toLowerCase().replace('delete', 'del')] = method;
 });
 
-var Root = function() {
+var Root = function(opts) {
 	this.mixin = protein();
 	this.routes = {};
 	this.errors = {};
 	this.servers = [];
+	if (opts && opts.payloadLimit) this._payloadLimit = opts.payloadLimit;
 
 	this.on('request', function(request, response) {
 		this.mixin(request, response);
@@ -276,6 +277,6 @@ Object.keys(ALIASES).forEach(function(alias) {
 	};
 });
 
-module.exports = function() {
-	return new Root().use(require('./defaults'));
+module.exports = function(opts) {
+	return new Root(opts).use(require('./defaults'));
 };
