@@ -18,5 +18,8 @@
   "author": "Mathias Buus Madsen <mathiasbuus@gmail.com>",
   "scripts": {
     "test": "node tests"
+  },
+  "devDependencies": {
+    "after": "^0.8.1"
   }
 }
